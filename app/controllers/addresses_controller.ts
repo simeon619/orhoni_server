@@ -24,22 +24,10 @@ export default class AddressesController {
     }
   }
 
-  public async get_address({ request, response, auth }: HttpContext) {
+  public async get_addresses({ request, response, auth }: HttpContext) {
     const { address_id, name, order_by, page = 1, limit = 10, user_id } = request.qs()
 
     try {
-      if (address_id) {
-        const address = await Address.find(address_id)
-        if (!address) {
-          return response.status(404).json({
-            message: 'Adresse non trouvée',
-          })
-        }
-        return response.status(200).json({
-          message: 'Adresse trouvé',
-          data: address.$attributes,
-        })
-      }
       let query = db.from(Address.table).select('*')
 
       if (user_id) {
@@ -80,7 +68,8 @@ export default class AddressesController {
     }
   }
 
-  public async update_address({ request, response }: HttpContext) {
+  public async update_address({ request, response, auth }: HttpContext) {
+    const user = await auth.authenticate()
     try {
       const address_id = request.input('address_id')
       const address = await Address.find(address_id)
@@ -91,6 +80,11 @@ export default class AddressesController {
         })
       }
 
+      if (user.id !== address.user_id) {
+        return response.status(403).json({
+          message: "Vous n'avez pas le droit d'éditer cette adresse",
+        })
+      }
       const data = request.only([
         'longitude',
         'latitude',
@@ -115,7 +109,8 @@ export default class AddressesController {
     }
   }
 
-  public async delete_address({ params, response }: HttpContext) {
+  public async delete_address({ params, response, auth }: HttpContext) {
+    const user = await auth.authenticate()
     try {
       const address = await Address.find(params.address_id)
 
@@ -124,7 +119,11 @@ export default class AddressesController {
           message: 'Adresse non trouvée',
         })
       }
-
+      if (user.id !== address.user_id) {
+        return response.status(403).json({
+          message: "Vous n'avez pas le droit de supprimer cette adresse",
+        })
+      }
       await address.delete()
 
       return response.status(200).json({

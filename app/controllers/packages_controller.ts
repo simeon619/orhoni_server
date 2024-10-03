@@ -20,7 +20,7 @@ export default class PackagesController {
       request,
       column_name: 'background',
       table_id: id,
-      table_name: 'packages',
+      table_name: Package.table,
       options: {
         throwError: false,
         min: 1,
@@ -31,9 +31,9 @@ export default class PackagesController {
     })
     const icon = await createFiles({
       request,
-      column_name: 'background',
+      column_name: 'icon',
       table_id: id,
-      table_name: 'packages',
+      table_name: Package.table,
       options: {
         throwError: false,
         min: 1,
@@ -62,25 +62,15 @@ export default class PackagesController {
     }
   }
 
-  public async get_package({ request, response }: HttpContext) {
+  public async get_packages({ request, response }: HttpContext) {
     const { package_id, page = 1, limit = 10 } = request.qs()
     try {
+      let query = Package.query()
+
       if (package_id) {
-        const pckage = await Package.find(package_id)
-
-        if (!pckage) {
-          return response.status(404).json({
-            message: 'Package non trouvé',
-          })
-        }
-
-        return response.status(200).json({
-          message: 'Package récupéré avec succès',
-          data: pckage,
-        })
+        query = query.where('id', package_id)
       }
-
-      const packages = await Package.query().paginate(page, limit)
+      const packages = await query.paginate(page, limit)
 
       return response.status(200).json({
         message: 'Packages récupérés avec succès',
@@ -117,7 +107,7 @@ export default class PackagesController {
       let icon: string[]
       icon = await updateFiles({
         request,
-        table_name: 'packages',
+        table_name: Package.table,
         table_id: pckage.id,
         column_name: 'icon',
         lastUrls: (pckage as any)['icon'],
@@ -132,7 +122,7 @@ export default class PackagesController {
       })
       urls = await updateFiles({
         request,
-        table_name: 'packages',
+        table_name: Package.table,
         table_id: pckage.id,
         column_name: 'background',
         lastUrls: (pckage as any)['background'],

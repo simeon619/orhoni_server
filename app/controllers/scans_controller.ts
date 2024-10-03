@@ -15,7 +15,7 @@ export default class ScansController {
       request,
       column_name: 'photos',
       table_id: id,
-      table_name: 'scans',
+      table_name: Scan.table,
       options: {
         throwError: false,
         min: 1,
@@ -40,22 +40,8 @@ export default class ScansController {
 
   public async get_scan({ params, request, response, auth }: HttpContext) {
     const user = await auth.authenticate()
-    const { page = 1, limit = 10, order_by = 'date_desc' } = request.qs()
+    const { page = 1, limit = 10, order_by = 'date_desc', scan_id } = request.qs()
     try {
-      if (params.id) {
-        const scan = await Scan.find(params.id)
-
-        if (!scan) {
-          return response.status(404).json({
-            message: 'Scan non trouvé',
-          })
-        }
-
-        return response.status(200).json({
-          message: 'Scan récupéré avec succès',
-          data: scan,
-        })
-      }
       let query = db
         .from(Scan.table)
         .select('*')
@@ -64,6 +50,9 @@ export default class ScansController {
 
       if (order_by) {
         query = applyOrderBy(query, order_by, Scan.table)
+      }
+      if (scan_id) {
+        query = query.where('id', scan_id)
       }
       const scans = await query.paginate(page, limit)
       return response.status(200).json({
@@ -89,11 +78,13 @@ export default class ScansController {
         })
       }
 
+      // if(user.id !== scan.)
       const data = request.only(['trackable_id', 'address_id', 'message', 'contacts', 'is_opened'])
+
       let urls: string[]
       urls = await updateFiles({
         request,
-        table_name: 'products',
+        table_name: Scan.table,
         table_id: scan.id,
         column_name: 'photos',
         lastUrls: (scan as any)['photos'],

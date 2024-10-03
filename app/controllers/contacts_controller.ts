@@ -5,16 +5,16 @@ import db from '@adonisjs/lucid/services/db'
 import { applyOrderBy } from './Tools/utils.js'
 
 export default class ContactsController {
-  public async create_contact({ request, response }: HttpContext) {
+  public async create_contact({ request, response, auth }: HttpContext) {
+    const user = await auth.authenticate()
     const data = request.only([
-      'user_id',
       'type', // 'phone' ou 'link'
       'use',
       'phone',
     ])
 
     try {
-      const contact = await Contact.create(data)
+      const contact = await Contact.create({ ...data, user_id: user.id })
       return response.status(201).json({
         message: 'Contact créé avec succès',
         data: contact,
@@ -27,32 +27,20 @@ export default class ContactsController {
     }
   }
 
-  public async get_contact({ params, response, auth }: HttpContext) {
-    const { page = 1, limit = 10, order_by = 'date_desc', contact_id, user_id } = params
+  public async get_contacts({ request, response, auth }: HttpContext) {
+    const { page = 1, limit = 10, order_by = 'date_desc', contact_id, user_id } = request.qs()
     try {
-      if (contact_id) {
-        const contact = await Contact.findBy('user_id', contact_id)
-
-        if (!contact) {
-          return response.status(404).json({
-            message: 'Contact non trouvé',
-          })
-        }
-
-        return response.status(200).json({
-          message: 'Contact récupéré avec succès',
-          data: contact.$attributes,
-        })
-      }
-
       let query = db.from(Contact.table).select('*')
-      // .innerJoin('users', 'users.id', 'contacts.user_id')
-      // .where('user_id', user.id)
       if (user_id) {
+        //TO DO ADMIN
         query = query.where('user_id', user_id)
       } else {
         const user = await auth.authenticate()
         query = query.where('user_id', user.id)
+      }
+
+      if (contact_id) {
+        query = query.where('id', contact_id)
       }
       if (order_by) {
         query = applyOrderBy(query, order_by, Contact.table)
@@ -71,7 +59,8 @@ export default class ContactsController {
     }
   }
 
-  public async update_contact({ request, response }: HttpContext) {
+  public async update_contact({ request, response, auth }: HttpContext) {
+    const user = await auth.authenticate()
     const contact_id = request.input('contact_id')
     try {
       const contact = await Contact.find(contact_id)
@@ -82,8 +71,12 @@ export default class ContactsController {
         })
       }
 
+      if (user.id !== contact.user_id) {
+        return response.status(403).json({
+          message: "Vous n'avez pas le droit d'éditer ce contact",
+        })
+      }
       const data = request.only([
-        'user_id',
         'type', // 'phone' ou 'link'
         'use',
         'phone',
@@ -104,7 +97,8 @@ export default class ContactsController {
     }
   }
 
-  public async delete_contact({ params, response }: HttpContext) {
+  public async delete_contact({ params, response, auth }: HttpContext) {
+    const user = await auth.authenticate()
     try {
       const contact = await Contact.find(params.contact_id)
 
@@ -113,7 +107,11 @@ export default class ContactsController {
           message: 'Contact non trouvé',
         })
       }
-
+      if (user.id !== contact.user_id) {
+        return response.status(403).json({
+          message: "Vous n'avez pas le droit de supprimer ce contact",
+        })
+      }
       await contact.delete()
 
       return response.status(200).json({

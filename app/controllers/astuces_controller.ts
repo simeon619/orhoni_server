@@ -10,6 +10,7 @@ import { IMG_EXT } from './Tools/utils.js'
 
 export default class AstucesController {
   public async create_astuce({ request, response }: HttpContext) {
+    //TO DO ADMIN
     const data = request.only(['title', 'subtitle', 'description'])
     let photoUrl = [] as string[]
     let iconUrl = [] as string[]
@@ -53,7 +54,7 @@ export default class AstucesController {
 
       return response.status(201).json({
         message: 'Astuce créée avec succès',
-        data: astuce,
+        data: astuce.$attributes,
       })
     } catch (error) {
       return response.status(500).json({
@@ -63,27 +64,16 @@ export default class AstucesController {
     }
   }
 
-  public async get_astuce({ request, response }: HttpContext) {
-    const { astuce_id, page = 1, limit = 5 } = request.qs()
+  public async get_astuces({ request, response }: HttpContext) {
+    //TO DO ADMIN
+    const { astuce_id, page = 1, limit = 5, title } = request.qs()
     try {
-      if (astuce_id) {
-        const pckage = await Astuce.find(astuce_id)
-
-        if (!pckage) {
-          return response.status(404).json({
-            message: 'Astuce non trouvé',
-          })
-        }
-
-        return response.status(200).json({
-          message: 'Astuce récupéré avec succès',
-          data: pckage.$attributes,
-        })
-      }
-
       let query = db.from(Astuce.table)
       if (astuce_id) {
         query = query.where('id', astuce_id)
+      }
+      if (title) {
+        query = query.where('title', 'like', `%${title}%`)
       }
       const astuces = await query.paginate(page, limit)
       return response.status(200).json({
@@ -99,6 +89,7 @@ export default class AstucesController {
   }
 
   public async update_astuce({ request, response }: HttpContext) {
+    //TO DO ADMIN
     const body = request.all()
     try {
       const astuce = await Astuce.find(body.astuce_id)
@@ -113,7 +104,7 @@ export default class AstucesController {
       let icon: string[]
       urls = await updateFiles({
         request,
-        table_name: 'products',
+        table_name: Astuce.table,
         table_id: astuce.id,
         column_name: 'background',
         lastUrls: (astuce as any)['background'],
@@ -128,11 +119,11 @@ export default class AstucesController {
       })
       icon = await updateFiles({
         request,
-        table_name: 'products',
+        table_name: Astuce.table,
         table_id: astuce.id,
-        column_name: 'background',
-        lastUrls: (astuce as any)['background'],
-        newPseudoUrls: body['background'],
+        column_name: 'icons',
+        lastUrls: (astuce as any)['icons'],
+        newPseudoUrls: body['icons'],
         options: {
           throwError: false,
           min: 1,
@@ -159,6 +150,7 @@ export default class AstucesController {
   }
 
   public async delete_astuce({ params, response }: HttpContext) {
+    //TO DO ADMIN
     try {
       const astuce = await Astuce.find(params.id)
 
@@ -182,13 +174,14 @@ export default class AstucesController {
   }
 
   public async create_astuce_step({ request, response }: HttpContext) {
+    //TO DO ADMIN
     const data = request.only(['astuce_id', 'title', 'subtitle', 'description'])
     const id = v4()
     const photosUrl = await createFiles({
       request,
-      column_name: 'photos',
+      column_name: 'images',
       table_id: id,
-      table_name: 'scans',
+      table_name: AstuceStep.table,
       options: {
         throwError: false,
         min: 1,
@@ -211,6 +204,7 @@ export default class AstucesController {
     }
   }
   public async update_astuce_step({ params, request, response }: HttpContext) {
+    //TO DO ADMIN
     try {
       const astuceStep = await AstuceStep.find(params.id)
       const body = request.all()
@@ -224,7 +218,7 @@ export default class AstucesController {
       let urls: string[]
       urls = await updateFiles({
         request,
-        table_name: 'products',
+        table_name: AstuceStep.table,
         table_id: astuceStep.id,
         column_name: 'images',
         lastUrls: (astuceStep as any)['images'],

@@ -1,36 +1,41 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+import User from '#models/user'
 import UserPackage from '#models/user_package'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 
 export default class UserPackagesController {
-  public async create_user_package({ request, response, auth }: HttpContext) {
-    const user = await auth.authenticate()
+  public async _create_user_package({
+    user,
+    data,
+  }: {
+    user: User
+    data: { package_id: string; start_date: any; end_date: any }
+  }) {
+    // const user = await auth.authenticate()
 
-    const data = request.only(['package_id', 'start_date', 'end_date'])
+    // const data = request.only(['package_id', 'start_date', 'end_date'])
 
-    try {
-      const userPackage = await UserPackage.create({ ...data, user_id: user.id })
-      return response.status(201).json({
-        message: 'Package utilisateur créé avec succès',
-        data: userPackage.$attributes,
-      })
-    } catch (error) {
-      return response.status(500).json({
-        message: 'Erreur lors de la création du package utilisateur',
-        error: error.message,
-      })
-    }
+    const userPackage = await UserPackage.create({ ...data, user_id: user.id })
+    return userPackage.$attributes
   }
 
-  public async get_user_package({ response, auth }: HttpContext) {
-    const user = await auth.authenticate()
+  public async get_user_packages({ response, auth, request }: HttpContext) {
+    const { user_id, limit = 10, page = 1, package_id } = request.qs()
     try {
-      let query = db
-        .from(UserPackage.table)
-        // .select('*')
-        // .innerJoin('users', 'users.id', 'user_packages.user_id')
-        .where('user_id', user.id)
-      const userPackage = await query.first()
+      let query = db.from(UserPackage.table)
+      if (user_id) {
+        //TO DO ADMIN
+        query = query.where('user_id', user_id)
+      } else {
+        const user = await auth.authenticate()
+        query = query.where('user_id', user.id)
+      }
+      if (package_id) {
+        query = query.where('id', package_id)
+      }
+
+      const userPackage = await query.paginate(page, limit)
       if (!userPackage) {
         return response.status(404).json({
           message: 'Package utilisateur non trouvé',
@@ -39,7 +44,7 @@ export default class UserPackagesController {
 
       return response.status(200).json({
         message: 'Package utilisateur récupéré avec succès',
-        data: userPackage.$attributes,
+        data: userPackage,
       })
     } catch (error) {
       return response.status(500).json({
