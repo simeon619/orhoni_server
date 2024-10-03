@@ -1,6 +1,7 @@
 import webpush from 'web-push'
 
 import router from '@adonisjs/core/services/router'
+const AuthController = () => import('#controllers/auth_controller')
 const TrackablesController = () => import('#controllers/trackables_controller')
 const UserPackagesController = () => import('#controllers/user_packages_controller')
 const ScansController = () => import('#controllers/scans_controller')
@@ -8,6 +9,12 @@ const PackagesController = () => import('#controllers/packages_controller')
 const ContactsController = () => import('#controllers/contacts_controller')
 const AstucesController = () => import('#controllers/astuces_controller')
 const AddressesController = () => import('#controllers/addresses_controller')
+
+//Auth
+router.post('/phone_connexion', [AuthController, 'phone_connexion'])
+router.get('/me', [AuthController, 'me'])
+router.post('/edit_me', [AuthController, 'edit_me'])
+router.delete('/delete_user_account', [AuthController, 'delete_user_account'])
 
 //Adresses
 router.post('/create_address', [AddressesController, 'create_address'])
