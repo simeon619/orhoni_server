@@ -61,7 +61,7 @@ export default class TrackablesController {
     }
   }
 
-  public async get_trackable({ request, response, auth }: HttpContext) {
+  public async get_trackables({ request, response, auth }: HttpContext) {
     const user = await auth.authenticate()
 
     try {
