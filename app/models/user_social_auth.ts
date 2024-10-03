@@ -9,7 +9,10 @@ export default class UserSocialAuth extends BaseModel {
   declare user_id: string
 
   @column()
-  declare provider: string
+  declare social_diff: string
+
+  @column()
+  declare social_name: string
 
   @column()
   declare password: string

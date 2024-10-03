@@ -8,7 +8,7 @@ export default class extends BaseSchema {
       table.uuid('id').primary()
 
       table.uuid('user_id').references('id').inTable('users')
-      table.string('photo')
+      table.string('photos')
       table.string('category')
       table.string('type')
       table.string('name')
@@ -20,6 +20,9 @@ export default class extends BaseSchema {
       table.string('food_preference')
       table.string('health')
       table.string('description')
+      table.string('qr_code')
+
+      table.integer('index')
 
       table.timestamp('created_at')
       table.timestamp('updated_at')

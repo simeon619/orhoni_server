@@ -43,6 +43,8 @@
     "@swc/core": "^1.7.22",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.5.1",
+    "@types/uuid": "^10.0.0",
+    "@types/web-push": "^3.6.3",
     "eslint": "^9.9.1",
     "hot-hook": "^0.3.0",
     "pino-pretty": "^11.2.2",
@@ -51,6 +53,7 @@
     "typescript": "~5.5"
   },
   "dependencies": {
+    "@adonisjs/ally": "^5.0.2",
     "@adonisjs/auth": "^9.2.3",
     "@adonisjs/core": "^6.12.1",
     "@adonisjs/cors": "^2.2.1",
@@ -58,7 +61,10 @@
     "@vinejs/vine": "^2.1.0",
     "better-sqlite3": "^11.3.0",
     "luxon": "^3.5.0",
-    "reflect-metadata": "^0.2.2"
+    "openapi-types": ">=7",
+    "reflect-metadata": "^0.2.2",
+    "uuid": "^10.0.0",
+    "web-push": "^3.6.7"
   },
   "hotHook": {
     "boundaries": [

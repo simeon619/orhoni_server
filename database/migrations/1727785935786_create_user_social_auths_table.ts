@@ -7,9 +7,10 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('id').primary()
 
-      table.uuid('user_id').references('id').inTable('users')
-      table.string('provider')
-      table.string('password')
+      table.uuid('user_id').references('id').inTable('users').notNullable()
+      table.string('social_diff').notNullable()
+      table.string('social_name').notNullable()
+      table.string('password').notNullable()
 
       table.timestamp('created_at')
       table.timestamp('updated_at')

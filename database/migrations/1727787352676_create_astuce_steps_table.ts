@@ -7,6 +7,8 @@ export default class extends BaseSchema {
     this.schema.createTable(this.tableName, (table) => {
       table.uuid('id')
 
+      table.uuid('astuce_id').references('id').inTable('astuces').onDelete('CASCADE')
+
       table.string('title')
       table.string('subtitle')
       table.string('description')

@@ -9,7 +9,7 @@ export default class Trackable extends BaseModel {
   declare user_id: string
 
   @column()
-  declare photo: string
+  declare photos: string
 
   @column()
   declare category: string
@@ -48,7 +48,7 @@ export default class Trackable extends BaseModel {
   declare qr_code: string
 
   @column()
-  declare index: string
+  declare index: number
 
   @column.dateTime({ autoCreate: true })
   declare created_at: DateTime

@@ -1,0 +1,5 @@
+CONVENTION SUBLYMUS
+create/ => {id, more, optional}
+get/?id=id&more=more&optional=optional
+put/  => {id, more, optional}
+delete/:id/:more/?optional:value

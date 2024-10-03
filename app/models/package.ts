@@ -9,6 +9,15 @@ export default class Package extends BaseModel {
   declare name: string
 
   @column()
+  declare description: string
+
+  @column()
+  declare icon: string
+
+  @column()
+  declare background: string
+
+  @column()
   declare price_per_month: number
 
   @column()

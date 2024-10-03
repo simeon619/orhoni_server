@@ -20,13 +20,19 @@ export default class User extends compose(BaseModel, AuthFinder) {
   })
 
   @column({ isPrimary: true })
-  declare id: number
+  declare id: string
 
   @column()
   declare name: string | null
 
   @column()
-  declare phone: string
+  declare package_id: string
+
+  @column()
+  declare photos: string
+
+  @column()
+  declare phone: string | null
 
   @column({ serializeAs: null })
   declare password: string
@@ -36,4 +42,18 @@ export default class User extends compose(BaseModel, AuthFinder) {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+
+  public static ParseData(user: User['$attributes']) {
+    let photos = []
+    try {
+      photos = JSON.parse(user.photos || '[]')
+    } catch (error) {
+      console.error(error)
+    }
+    return {
+      ...(user.$attributes || user),
+      photos,
+      password: undefined,
+    } as any as User['$attributes']
+  }
 }
