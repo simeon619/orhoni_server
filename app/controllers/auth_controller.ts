@@ -2,7 +2,7 @@
 import User from '#models/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import { v4 } from 'uuid'
-import { updateFiles } from './Tools/FileManager/UpdateFiles.js'
+const { updateFiles } = await import('./Tools/FileManager/update_files.js')
 
 export default class AuthController {
   // public static async _create_user({
@@ -82,10 +82,10 @@ export default class AuthController {
   //   return ally.use('google').redirect()
   // }
 
-  public async delete_user_account({ request, auth }: HttpContext) {
-    const { user_id } = request.qs()
+  public async delete_user_account({ auth, params }: HttpContext) {
+    const user_id = params.id
     const user = await auth.authenticate()
-    AuthController._golbal_disconnection(user, user_id)
+    AuthController._golbal_disconnection(user, params.id)
 
     if (user_id /*&& admin / moderator*/) {
       const tagetUser = await User.find(user_id)

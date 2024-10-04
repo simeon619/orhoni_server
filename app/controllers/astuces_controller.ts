@@ -4,9 +4,11 @@ import AstuceStep from '#models/astuce_step'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import { v4 } from 'uuid'
-import { createFiles } from './Tools/FileManager/CreateFiles.js'
-import { updateFiles } from './Tools/FileManager/UpdateFiles.js'
-import { IMG_EXT } from './Tools/utils.js'
+const { IMG_EXT } = await import('./Tools/utils.js')
+// import { createFiles } from './Tools/FileManager/CreateFiles.js'
+// import { updateFiles } from './Tools/FileManager/UpdateFiles.js'
+const { createFiles } = await import('./Tools/FileManager/create_files.js')
+const { updateFiles } = await import('./Tools/FileManager/update_files.js')
 
 export default class AstucesController {
   public async create_astuce({ request, response }: HttpContext) {
@@ -51,7 +53,7 @@ export default class AstucesController {
         background: JSON.stringify(photoUrl),
         icon: JSON.stringify(iconUrl),
       })
-
+      astuce.$attributes.id = id
       return response.status(201).json({
         message: 'Astuce créée avec succès',
         data: astuce.$attributes,
@@ -121,9 +123,9 @@ export default class AstucesController {
         request,
         table_name: Astuce.table,
         table_id: astuce.id,
-        column_name: 'icons',
-        lastUrls: (astuce as any)['icons'],
-        newPseudoUrls: body['icons'],
+        column_name: 'icon',
+        lastUrls: (astuce as any)['icon'],
+        newPseudoUrls: body['icon'],
         options: {
           throwError: false,
           min: 1,
@@ -176,6 +178,15 @@ export default class AstucesController {
   public async create_astuce_step({ request, response }: HttpContext) {
     //TO DO ADMIN
     const data = request.only(['astuce_id', 'title', 'subtitle', 'description'])
+
+    if (data.astuce_id) {
+      const astuce = await Astuce.find(data.astuce_id)
+      if (!astuce) {
+        return response.status(404).json({
+          message: 'Astuce non trouvée, vous devez cree une astuce pour la définir',
+        })
+      }
+    }
     const id = v4()
     const photosUrl = await createFiles({
       request,
@@ -192,9 +203,10 @@ export default class AstucesController {
     })
     try {
       const astuceStep = await AstuceStep.create({ ...data, images: JSON.stringify(photosUrl), id })
+      astuceStep.$attributes.id = id
       return response.status(201).json({
         message: "Étape d'astuce créée avec succès",
-        data: { ...astuceStep.$attributes, id },
+        data: astuceStep.$attributes,
       })
     } catch (error) {
       return response.status(500).json({
@@ -203,10 +215,11 @@ export default class AstucesController {
       })
     }
   }
-  public async update_astuce_step({ params, request, response }: HttpContext) {
+  public async update_astuce_step({ request, response }: HttpContext) {
     //TO DO ADMIN
+    const astuce_step_id = request.input('astuce_step_id')
     try {
-      const astuceStep = await AstuceStep.find(params.id)
+      const astuceStep = await AstuceStep.find(astuce_step_id)
       const body = request.all()
       if (!astuceStep) {
         return response.status(404).json({
@@ -264,6 +277,28 @@ export default class AstucesController {
     } catch (error) {
       return response.status(500).json({
         message: 'Erreur lors de la récupération des étapes',
+        error: error.message,
+      })
+    }
+  }
+  public async delete_astuce_step({ params, response }: HttpContext) {
+    //TO DO ADMIN
+    try {
+      const astuceStep = await AstuceStep.find(params.id)
+
+      if (!astuceStep) {
+        return response.status(404).json({
+          message: "Étape d'astuce non trouvée",
+        })
+      }
+
+      await astuceStep.delete()
+      return response.status(200).json({
+        message: "Étape d'astuce supprimée avec succès",
+      })
+    } catch (error) {
+      return response.status(500).json({
+        message: "Erreur lors de la suppression de l'étape d'astuce",
         error: error.message,
       })
     }

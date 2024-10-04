@@ -2,7 +2,8 @@
 import Contact from '#models/contact'
 import { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
-import { applyOrderBy } from './Tools/utils.js'
+import { v4 } from 'uuid'
+const { applyOrderBy } = await import('./Tools/utils.js')
 
 export default class ContactsController {
   public async create_contact({ request, response, auth }: HttpContext) {
@@ -12,12 +13,13 @@ export default class ContactsController {
       'use',
       'phone',
     ])
-
+    const id = v4()
     try {
-      const contact = await Contact.create({ ...data, user_id: user.id })
+      const contact = await Contact.create({ ...data, user_id: user.id, id })
+      contact.$attributes.id = id
       return response.status(201).json({
         message: 'Contact créé avec succès',
-        data: contact,
+        data: contact.$attributes,
       })
     } catch (error) {
       return response.status(500).json({
@@ -29,18 +31,21 @@ export default class ContactsController {
 
   public async get_contacts({ request, response, auth }: HttpContext) {
     const { page = 1, limit = 10, order_by = 'date_desc', contact_id, user_id } = request.qs()
+    const isAuth = await auth.check()
     try {
       let query = db.from(Contact.table).select('*')
       if (user_id) {
         //TO DO ADMIN
         query = query.where('user_id', user_id)
-      } else {
+      } else if (isAuth) {
         const user = await auth.authenticate()
         query = query.where('user_id', user.id)
-      }
-
-      if (contact_id) {
+      } else if (contact_id) {
         query = query.where('id', contact_id)
+      } else {
+        return response.status(400).json({
+          message: "Veuillez fournir l'identifiant du contact",
+        })
       }
       if (order_by) {
         query = applyOrderBy(query, order_by, Contact.table)
@@ -60,9 +65,9 @@ export default class ContactsController {
   }
 
   public async update_contact({ request, response, auth }: HttpContext) {
-    const user = await auth.authenticate()
     const contact_id = request.input('contact_id')
     try {
+      const user = await auth.authenticate()
       const contact = await Contact.find(contact_id)
 
       if (!contact) {
@@ -100,7 +105,7 @@ export default class ContactsController {
   public async delete_contact({ params, response, auth }: HttpContext) {
     const user = await auth.authenticate()
     try {
-      const contact = await Contact.find(params.contact_id)
+      const contact = await Contact.find(params.id)
 
       if (!contact) {
         return response.status(404).json({

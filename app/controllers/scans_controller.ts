@@ -3,9 +3,9 @@ import Scan from '#models/scan'
 import type { HttpContext } from '@adonisjs/core/http'
 import db from '@adonisjs/lucid/services/db'
 import { v4 } from 'uuid'
-import { createFiles } from './Tools/FileManager/CreateFiles.js'
-import { updateFiles } from './Tools/FileManager/UpdateFiles.js'
-import { applyOrderBy, IMG_EXT } from './Tools/utils.js'
+const { applyOrderBy, IMG_EXT } = await import('./Tools/utils.js')
+const { createFiles } = await import('./Tools/FileManager/create_files.js')
+const { updateFiles } = await import('./Tools/FileManager/update_files.js')
 
 export default class ScansController {
   public async create_scan({ request, response }: HttpContext) {
@@ -26,9 +26,10 @@ export default class ScansController {
     })
     try {
       const scan = await Scan.create({ ...data, id, photos: JSON.stringify(photosUrl) })
+      scan.$attributes.id = id
       return response.status(201).json({
         message: 'Scan créé avec succès',
-        data: scan,
+        data: scan.$attributes,
       })
     } catch (error) {
       return response.status(500).json({
@@ -38,21 +39,21 @@ export default class ScansController {
     }
   }
 
-  public async get_scan({ params, request, response, auth }: HttpContext) {
-    const user = await auth.authenticate()
-    const { page = 1, limit = 10, order_by = 'date_desc', scan_id } = request.qs()
+  public async get_scan({ request, response, auth }: HttpContext) {
+    const { page = 1, limit = 10, order_by = 'date_desc', scan_id, trackable_id } = request.qs()
     try {
-      let query = db
-        .from(Scan.table)
-        .select('*')
-        .innerJoin('users', 'users.id', 'scans.user_id')
-        .where('user_id', user.id)
+      let query = db.from(Scan.table).select('*')
+      // .innerJoin('users', 'users.id', 'scans.user_id')
+      // .where('user_id', user.id)
 
-      if (order_by) {
-        query = applyOrderBy(query, order_by, Scan.table)
-      }
       if (scan_id) {
         query = query.where('id', scan_id)
+      }
+      if (trackable_id) {
+        query = query.where('trackable_id', trackable_id)
+      }
+      if (order_by) {
+        query = applyOrderBy(query, order_by, Scan.table)
       }
       const scans = await query.paginate(page, limit)
       return response.status(200).json({
@@ -115,7 +116,7 @@ export default class ScansController {
 
   public async delete_scan({ params, response }: HttpContext) {
     try {
-      const scan = await Scan.find(params.scan_id)
+      const scan = await Scan.find(params.id)
 
       if (!scan) {
         return response.status(404).json({

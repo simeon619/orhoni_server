@@ -1,7 +1,7 @@
 import env from "#start/env";
 import { HttpContext } from "@adonisjs/core/http";
 import AdmZip from "adm-zip";
-import { addWorldConfig } from "../FileManager/addConfig.js";
+import { addWorldConfig } from "../FileManager/add_config.js";
 
 type FileType = ReturnType<HttpContext["request"]["file"]>;
 

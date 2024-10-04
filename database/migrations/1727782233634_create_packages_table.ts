@@ -12,6 +12,10 @@ export default class extends BaseSchema {
       table.decimal('price_per_year', 10, 2)
       table.string('features')
 
+      table.string('icon')
+      table.string('background')
+      table.string('description')
+
       table.timestamp('created_at')
       table.timestamp('updated_at')
     })

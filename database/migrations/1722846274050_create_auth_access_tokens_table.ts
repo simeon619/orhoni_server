@@ -11,7 +11,7 @@ export default class extends BaseSchema {
         .notNullable()
         .unsigned()
         .references('id')
-        .inTable('accounts')
+        .inTable('users')
         .onDelete('CASCADE')
 
       table.string('type').notNullable()

@@ -2,9 +2,10 @@
 import Package from '#models/package'
 import type { HttpContext } from '@adonisjs/core/http'
 import { v4 } from 'uuid'
-import { createFiles } from './Tools/FileManager/CreateFiles.js'
-import { updateFiles } from './Tools/FileManager/UpdateFiles.js'
-import { IMG_EXT } from './Tools/utils.js'
+import { applyOrderBy } from './Tools/utils.js'
+const { IMG_EXT } = await import('./Tools/utils.js')
+const { createFiles } = await import('./Tools/FileManager/create_files.js')
+const { updateFiles } = await import('./Tools/FileManager/update_files.js')
 
 export default class PackagesController {
   public async create_package({ request, response }: HttpContext) {
@@ -25,7 +26,7 @@ export default class PackagesController {
         throwError: false,
         min: 1,
         max: 7,
-        extname: ['jpg', 'jpeg', 'webp'],
+        extname: IMG_EXT,
         maxSize: 12 * 1024 * 1024,
       },
     })
@@ -38,7 +39,7 @@ export default class PackagesController {
         throwError: false,
         min: 1,
         max: 7,
-        extname: ['jpg', 'jpeg', 'webp'],
+        extname: IMG_EXT,
         maxSize: 12 * 1024 * 1024,
       },
     })
@@ -49,7 +50,7 @@ export default class PackagesController {
         icon: JSON.stringify(icon),
         id,
       })
-
+      pckage.$attributes.id = id
       return response.status(201).json({
         message: 'Package créé avec succès',
         data: pckage.$attributes,
@@ -62,13 +63,31 @@ export default class PackagesController {
     }
   }
 
-  public async get_packages({ request, response }: HttpContext) {
-    const { package_id, page = 1, limit = 10 } = request.qs()
+  public async get_packages({ request, response, auth }: HttpContext) {
+    const { page = 1, limit = 10, order_by = 'date_desc', package_id, user_id } = request.qs()
+    const isAuth = await auth.check()
     try {
       let query = Package.query()
 
+      if (user_id) {
+        //TO DO ADMIN
+        query = query.where('user_id', user_id)
+      } else if (isAuth) {
+        const user = await auth.authenticate()
+        query = query.where('user_id', user.id)
+      } else if (package_id) {
+        query = query.where('id', package_id)
+      } else {
+        return response.status(400).json({
+          message: "Veuillez fournir l'identifiant du package",
+        })
+      }
+
       if (package_id) {
         query = query.where('id', package_id)
+      }
+      if (order_by) {
+        query = applyOrderBy(query, order_by, Package.table)
       }
       const packages = await query.paginate(page, limit)
 
@@ -154,7 +173,7 @@ export default class PackagesController {
 
   public async delete_package({ params, response }: HttpContext) {
     try {
-      const pckage = await Package.find(params.package_id)
+      const pckage = await Package.find(params.id)
 
       if (!pckage) {
         return response.status(404).json({
