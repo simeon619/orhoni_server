@@ -135,12 +135,11 @@ export default class AuthController {
 
   public async phone_connexion({ request, response }: HttpContext) {
     const data = request.only(['phone', 'password'])
-
+    if (!data.phone) return response.status(400).json({ message: 'phone is required' })
     const exist_user = await User.findBy('phone', data.phone)
     if (exist_user) {
       let Atoken = await User.accessTokens.create(exist_user)
       const token = Atoken.value?.release()
-
       return response.status(200).json({
         message: 'Account récupéré avec succès',
         data: {
@@ -151,6 +150,8 @@ export default class AuthController {
     }
     const user_id = v4()
     try {
+      if (!data.phone || !data.password)
+        return response.status(400).json({ message: 'phone and password are required' })
       let user = await User.create({
         id: user_id,
         phone: data.phone,
@@ -167,7 +168,6 @@ export default class AuthController {
         data: {
           token,
           ...User.ParseData(user),
-          photos: '[]',
         },
       })
     } catch (error) {
@@ -320,9 +320,6 @@ export default class AuthController {
 
   async edit_me({ request, auth }: HttpContext) {
     const body = request.body()
-
-    let urls: Record<string, string[]> = {}
-
     const user = await auth.authenticate()
 
     ;(['name'] as const).forEach((attribute) => {
@@ -331,7 +328,7 @@ export default class AuthController {
 
     for (const f of ['photos'] as const) {
       if (body[f]) {
-        urls[f] = await updateFiles({
+        const urls = await updateFiles({
           request,
           table_name: 'users',
           table_id: user.id,
@@ -360,7 +357,10 @@ export default class AuthController {
             maxSize: 12 * 1024 * 1024,
           },
         })
-        user[f] = JSON.stringify(urls[f])
+        console.log('🚀 ~ AuthController ~ edit_me ~ urls:', urls)
+        if (urls[0]) {
+          user['photos'] = JSON.stringify(urls[0])
+        }
       }
     }
 
@@ -368,7 +368,6 @@ export default class AuthController {
 
     return {
       ...User.ParseData(user.$attributes),
-      ...urls,
     }
   }
   // async get_users({ request, auth }: HttpContext) {

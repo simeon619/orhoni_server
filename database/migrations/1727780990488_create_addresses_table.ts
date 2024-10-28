@@ -15,6 +15,8 @@ export default class extends BaseSchema {
 
       table.string('name')
 
+      table.string('description')
+
       table.string('address')
 
       table.string('icon')

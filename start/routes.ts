@@ -1,6 +1,8 @@
 import webpush from 'web-push'
 
+import { HttpContext } from '@adonisjs/core/http'
 import router from '@adonisjs/core/services/router'
+import { middleware } from './kernel.js'
 const AuthController = () => import('#controllers/auth_controller')
 const TrackablesController = () => import('#controllers/trackables_controller')
 const UserPackagesController = () => import('#controllers/user_packages_controller')
@@ -14,6 +16,7 @@ const AddressesController = () => import('#controllers/addresses_controller')
 router.post('/phone_connexion', [AuthController, 'phone_connexion'])
 router.get('/me', [AuthController, 'me'])
 router.post('/edit_me', [AuthController, 'edit_me'])
+router.get('/disconnection', [AuthController, 'disconnection'])
 router.delete('/delete_user_account/:id', [AuthController, 'delete_user_account'])
 
 //Adresses
@@ -60,6 +63,24 @@ router.post('/create_trackable', [TrackablesController, 'create_trackable'])
 router.get('/get_trackables', [TrackablesController, 'get_trackables'])
 router.put('/update_trackable', [TrackablesController, 'update_trackable'])
 router.delete('/delete_trackable/:id', [TrackablesController, 'delete_trackable'])
+
+router
+  .get('/try_token', async () => {
+    return {
+      valid: true,
+    }
+    // try {
+    //   await auth.authenticate()
+    //   return response.status(200).json({
+    //     message: 'Token validé avec succès',
+    //   })
+    // } catch (error) {
+    //   return response.status(401).json({
+    //     message: 'Token non valide ou expiré' + error.message,
+    //   })
+    // }
+  })
+  .use(middleware.auth())
 
 const publicVapidKey =
   'BDwYyNLBYIyNOBFX3M27uTAUXLrUxgHVyBJPjxJj3aQR7ghxC_MetHpzgTspdk4e4Iq9E0LCzeAtbCPOcdclxCk'

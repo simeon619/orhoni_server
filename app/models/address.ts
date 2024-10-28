@@ -18,6 +18,9 @@ export default class Address extends BaseModel {
   declare name: string
 
   @column()
+  declare description: string
+
+  @column()
   declare address: string
 
   @column()

@@ -12,7 +12,7 @@ const { updateFiles } = await import('./Tools/FileManager/update_files.js')
 
 export default class AstucesController {
   public async create_astuce({ request, response }: HttpContext) {
-    //TO DO ADMIN
+    //TODO ADMIN
     const data = request.only(['title', 'subtitle', 'description'])
     let photoUrl = [] as string[]
     let iconUrl = [] as string[]
@@ -155,7 +155,6 @@ export default class AstucesController {
     //TO DO ADMIN
     try {
       const astuce = await Astuce.find(params.id)
-
       if (!astuce) {
         return response.status(404).json({
           message: 'Astuce non trouvée',
